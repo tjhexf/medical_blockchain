@@ -148,6 +148,5 @@ try:
 	conn.close()
 
 	print("SQLite accessed successfully.")
-	print(rows)
 except Exception:
 	print(f"Failed to access SQLite database")
