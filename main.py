@@ -10,7 +10,7 @@ import sqlite3
 def file_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
-    
+
 def base64_to_file(base64_data, output_path):
     with open(output_path, "wb") as f:
         f.write(base64.b64decode(base64_data))
@@ -35,7 +35,7 @@ class Block:
         }, sort_keys=True).encode()
 
         return hashlib.sha256(block_string).hexdigest()
-    
+
 class Blockchain:
     def __init__(self):
         self.chain = [self.create_genesis_block()]
@@ -54,7 +54,7 @@ class Blockchain:
             data=data,
             previous_hash=previous_block.hash
         )
-        self.chain.append(new_block)    
+        self.chain.append(new_block)
 
 def store_file(db_path, file_path):
     with open(file_path, "rb") as f:
@@ -97,6 +97,57 @@ print("Creating Example SQLite3 Database")
 conn = sqlite3.connect("medical_sql.db")
 cursor = conn.cursor()
 
+# Create the 'files' table if it doesn't exist
+cursor.execute(
+    """CREATE TABLE IF NOT EXISTS files (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT NOT NULL,
+        data BLOB NOT NULL
+    )"""
+)
+conn.commit()
+conn.close()
+
 store_file("medical_sql.db", "sample_files/identity.txt")
 store_file("medical_sql.db", "sample_files/example.pdf")
 store_file("medical_sql.db", "sample_files/photo.png")
+
+# Trying to access and modify the databases
+
+## Blockchain
+print("Modifying a block")
+
+try:
+	medical_blockchain.chain[1].data = base64.b64encode(b'modified data in block 1').decode()
+	print("Blockchain data modified (attempted)")
+except AttributeError as e:
+	print(f"Failed to modify block data: {e}")
+except Exception as e:
+	print(f"An unexpected error occurred: {e}")
+
+### Blockchain validation
+blockchain_intact = True
+for b in range(1, len(medical_blockchain.chain)):
+	current = medical_blockchain.chain[b]
+	previous = medical_blockchain.chain[b - 1]
+
+	if current.hash != current.calculate_hash() or current.previous_hash != previous.hash:
+		blockchain_intact = False
+		break
+if blockchain_intact:
+	print("Blockchain intact")
+else:
+	print("Blockchain compromised!")
+
+## SQLite
+try:
+	conn = sqlite3.connect("medical_sql.db")
+	cursor = conn.cursor()
+	cursor.execute("SELECT * FROM files")
+	rows = cursor.fetchall()
+	conn.close()
+
+	print("SQLite accessed successfully.")
+	print(rows)
+except Exception:
+	print(f"Failed to access SQLite database")
